@@ -1,0 +1,55 @@
+
+{# Django 템플릿 한 줄 주석 #}
+
+{% comment %}
+여러
+줄
+주석
+{% endcomment %}
+
+{# {{ key }}: 변수 값 출력 #}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>Variable/Filters</h1>
+
+    <h2>Variable</h2>
+
+    {# render() 호출 시 전달된 context 값 이용 가능 #}
+
+    {# context로 전달된 dict 중 key가 name인 값을 출력 #}
+    <p>My name is {{ name }}</p>
+    <p>age: {{ age }}</p>
+    <p>fruits: {{ fruits }}</p>
+
+    {# 인덱스 번호 작성법: .index 번호 #}
+    <p>fruits.0: {{ fruits.0 }}</p>
+
+    <p>{{ users.0.name }}</p>
+
+    <hr>
+    <h2>Filter</h2>
+
+    <p>upper: {{ name|upper }}</p>
+    <p>add: {{ age|add:1 }}</p>
+    <p>date: {{ today|date:"Y/m/d" }}</p>
+
+    <p>{{ age|add:num|add:5 }}</p>
+    <p>{{ today|date:"Y/m/d (D) A h:i:s" }}</p>
+
+    {# now: 현재 템플릿이 렌더링 된 시간을 반환하는 함수 #}
+    {% now "Y" as current_year %}
+    <p>올해는 {{ current_year }}년이다.</p>
+
+    {% with username='gogd' x=1234 %}
+    <p>{{ username }} / {{ x }}</p>
+    {% endwith %}
+
+    <p>블록 밖: {{ username }} / {{ x }}</p>
+</body>
+</html>

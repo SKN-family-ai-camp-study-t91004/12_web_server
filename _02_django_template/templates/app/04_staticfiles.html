@@ -1,0 +1,21 @@
+{% load static %}
+{# 현재 템플릿에서 static 태그를 사용할 수 있게 등록 #}
+
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>staticfiles</title>
+    <link rel="stylesheet" href="{% static 'css/global.css' %}">
+</head>
+<body>
+<h1>staticfiles</h1>
+
+<img
+        src="{% static 'images/home.jpg' %}"
+        alt="집 가고 싶은 마음"
+>
+
+<script src="{% static 'js/global.js' %}"></script>
+</body>
+</html>

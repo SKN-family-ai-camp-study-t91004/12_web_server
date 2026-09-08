@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django Template | Urls</title>
+</head>
+<body>
+<h1>Urls</h1>
+
+{# index는 프로젝트 URL 이름, app:index는 app namespace 안의 이름이다. 각각 /와 /app/가 된다. #}
+<h2>view_name으로 url할당</h2>
+<div><a href="{% url 'index' %}">index페이지</a></div>
+<div><a href="{% url 'app:index' %}">app:index페이지</a></div>
+
+<h2>경로변수 Path Variable</h2>
+{# name='article'과 id=123 → /app/article/123이 된다. 경로의 정수가 View의 id 인자로 전달된다. #}
+<div><a href="{% url 'app:article' id=123 %}">/app/article/123</a></div>
+<div><a href="{% url 'app:article' id=45 %}">/app/article/45</a></div>
+
+<h2>Query String</h2>
+{# 경로는 search View를 선택하고 ? 뒤 q·lang은 request.GET으로 전달한다. #}
+<div><a href="{% url 'app:search' %}?q=AI&lang=en">/app/search?q=AI&lang=en</a></div>
+
+{# 입력 name이 쿼리 키가 된다. AI·en을 제출하면 주소 표시줄과 아래 결과를 함께 확인한다. #}
+{# 조회 실습이므로 method=get을 사용한다. mode를 생략해 View의 기본값 view도 확인한다. #}
+<form action="{% url 'app:search' %}" method="get">
+    <label>검색어 <input name="q" value="{{ q|default:'AI' }}"></label>
+    <label>언어 <input name="lang" value="{{ lang|default:'en' }}"></label>
+    <button type="submit">GET 요청 보내기</button>
+</form>
+
+<hr>
+
+<div id="result">
+    {# 0도 유효한 경로 정수이다. 참/거짓 검사 대신 값의 존재를 확인해 0을 숨기지 않는다. #}
+    {# 이 화면은 id 출력 예제이며 해당 번호의 DB 게시글을 조회하지 않는다. #}
+    {% if id != None %}
+        <p>요청 Article ID: {{ id }}</p>
+    {% endif %}
+
+    {# 전달받은 값만 표시하며 입력은 Django 기본 자동 이스케이프를 거쳐 HTML에 출력한다. #}
+    {% if q %}
+        <p>요청 q: {{ q }}</p>
+    {% endif %}
+
+    {% if lang %}
+        <p>요청 lang: {{ lang }}</p>
+    {% endif %}
+
+    {% if mode %}
+        <p>요청 mode: {{ mode }}</p>
+    {% endif %}
+
+</div>
+
+
+</body>
+</html>

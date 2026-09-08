@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>02_tags</title>
+    <style>
+    /* 표 테두리를 겹쳐 그려 회원 목록의 행·열을 비교한다. */
+    table {
+        border: 1px solid black;
+        border-collapse: collapse;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+    }
+    </style>
+</head>
+<body>
+    <h1>Tags</h1>
+
+    <p>나이: {{ age }}</p>
+
+    {% if age >= 20 %}
+        <p>성인이다.</p>
+
+    {% elif age >= 10 %}
+        <p>청소년이다.</p>
+
+    {% else %}
+        <p>어린이이다.</p>
+    {% endif %}
+
+    <hr>
+    {% if is_authenticated %}
+        <p>Welcome, {{ name }}</p>
+
+    {% else %}
+        <p>Please, log in.</p>
+    {% endif %}
+
+    <hr>
+
+    <ul>
+        {% for fruit in fruits %}
+            <li>
+                {{ fruit }}
+
+                {# forloop.first: for문 첫 번째 반복인 경우 True #}
+                {% if forloop.first %}♥{% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+
+    {% comment %}
+    `forloop` 변수: 반복문 상태 확인 가능
+    - forloop.counter: 루프의 현재 반복 횟수를 1부터 센다 (1-indexed)
+    - forloop.counter0: 루프의 현재 반복 횟수를 0부터 센다 (0-indexed)
+    - forloop.revcounter: 루프 끝에서부터 몇 번째 반복인지 1부터 센다 (1-indexed)
+    - forloop.revcounter0: 루프 끝에서부터 몇 번째 반복인지 0부터 센다 (0-indexed)
+    - forloop.first: 현재 반복이 첫 번째일 때 `True`
+    - forloop.last: 현재 반복이 마지막일 때 `True`
+    - forloop.parentloop: 중첩된 for문 내에서 바로 상위 루프를 참조할 때 사용
+    {% endcomment %}
+
+    <hr>
+    <table>
+    <tr>
+        <th>No</th>
+        <th>아이디</th>
+        <th>이름</th>
+        <th>나이</th>
+        <th>결혼여부</th>
+    </tr>
+
+    {% for user in users %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ user.id }}</td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.age }}</td>
+            <td>
+                <input
+                    type="checkbox"
+                    id="married{{ forloop.counter0 }}"
+                    onclick="return false;"
+                    {% if user.married %}checked{% endif %}
+                >
+            </td>
+        </tr>
+    {% empty %} {# users가 비어있는 경우라는 조건 #}
+        <tr>
+            <td colspan="5">조회된 회원이 없습니다.</td>
+        </tr>
+    {% endfor %}
+    </table>
+
+    <hr>
+
+    <h3>context에 있는 hobby를 순서 없는 목록으로 출력하기</h3>
+    <ul>
+        {% for h in hobby %}
+        <li>
+            {{ h }}
+        </li>
+        {% endfor %}
+    </ul>
+
+</body>
+</html>

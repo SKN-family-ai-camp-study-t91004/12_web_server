@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>전체제목 | {% block title %}세부제목{% endblock title %}</title>
+</head>
+<body>
+    {% include "./header.html" %}
+
+    <main>
+        {% block content %}
+            각 페이지마다 달라질 내용들....
+            (자식이 상속 받아서 채울 내용)
+        {% endblock %}
+    </main>
+
+    {% include "./footer.html" %}
+
+    {% block script %}
+        <script>
+            console.log('나 기본script야....');
+        </script>
+    {% endblock script %}
+</body>
+</html>

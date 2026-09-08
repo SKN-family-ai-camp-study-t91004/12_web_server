@@ -1,0 +1,57 @@
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+!.env.template
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Python environments, bytecode, and build outputs
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Local databases and uploaded/generated files
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+media/
+staticfiles/
+*.log
+logs/
+.verification/
+
+# Test and tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.ipynb_checkpoints/
+node_modules/
+
+# IDE and operating system files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+
+# Rebuildable distribution archives
+*.zip
