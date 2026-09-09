@@ -1,0 +1,50 @@
+{% load static %}
+<!-- 네비게이션바 -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+  <div class="container-fluid">
+      <a class="navbar-brand" href="{% url 'qna:index' %}">🇶 🇳 🇦</a>
+      <button class="navbar-toggler" type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#navbarSupportedContent"
+              aria-controls="navbarSupportedContent"
+              aria-expanded="false"
+              aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="{% url 'qna:index' %}">Home</a>
+          </li>
+          <li class="nav-item">
+              <a class="nav-link" href="#">About</a>
+          </li>
+        </ul>
+        <ul class="navbar-nav mb-2 mb-lg-0">
+          {# 기본 auth context processor가 현재 request.user를 user라는 이름으로 전달한다. #}
+          {% if user.is_authenticated %}
+            <li class="nav-item">
+              <a class="nav-link" href="#" title="{{ user.username }}">
+                {# 파일 존재를 먼저 확인한다. 비어 있는 ImageField의 .url을 바로 읽지 않는다. #}
+                {% if user.userdetail.profile %}
+                  <img src="{{ user.userdetail.profile.url }}" class="rounded-circle" width="28" alt="">
+                {% else %}
+                  <img src="{% static 'images/profile-default.jpg' %}" class="rounded-circle" width="28" alt="">
+                {% endif %}
+              </a>
+            </li>
+            <li>
+                <form method="post" action="{% url 'uauth:logout' %}">{% csrf_token %}<button class="nav-link" type="submit">로그아웃</button></form>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'uauth:login' %}">로그인</a>
+            </li>
+            <li>
+                <a class="nav-link" href="{% url 'uauth:signup' %}">회원가입</a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+  </div>
+</nav>

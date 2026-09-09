@@ -1,0 +1,11 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container my-3">
+    <h1>{{ question.subject }}</h1>
+    <p>작성자: {{ question.author|default:'탈퇴한 사용자' }}</p>
+    <p>작성일: {{ question.created_at|date:'Y-m-d H:i' }}</p>
+    <div class="border rounded p-3">{{ question.content|linebreaksbr }}</div>
+    <a class="btn btn-secondary mt-3" href="{% url 'qna:index' %}">목록으로</a>
+</div>
+{% endblock content %}

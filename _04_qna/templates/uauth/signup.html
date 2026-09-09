@@ -1,0 +1,90 @@
+{% extends "../layout/base.html" %}
+
+{% block style %}
+    <style>
+        .feedback.error {
+            color: red;
+        }
+        .feedback.success {
+            color: green;
+        }
+    </style>
+{% endblock %}
+
+{# Ajax는 화면 이동 없이 아이디 중복 여부를 확인한다. 최종 검증은 서버 폼에서 다시 수행한다. #}
+
+{% block content %}
+<div class="container my-3">
+  <h5 class="my-3 border-bottom pb-2">회원가입</h5>
+  {% include "../layout/form_errors.html" %}
+  {# enctype="application/x-www-form-urlencoded" 기본값 #}
+  <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="mb-3">
+          <label for="username">사용자 이름</label>
+          <input type="text" class="form-control" name="username" id="username" value="{{ form.username.value | default_if_none:'' }}">
+          <sub id="username-feedback" class="feedback"></sub>
+      </div>
+      <div class="mb-3">
+          <label for="password1">비밀번호</label>
+          <input type="password" class="form-control" name="password1" id="password1">
+      </div>
+      <div class="mb-3">
+          <label for="password2">비밀번호 확인</label>
+          <input type="password" class="form-control" name="password2" id="password2">
+      </div>
+      <div class="mb-3">
+          <label for="email">이메일</label>
+          <input type="text" class="form-control" name="email" id="email" value="{{ form.email.value | default_if_none:'' }}">
+      </div>
+      <div class="mb-3">
+          <label for="birthday">생일</label>
+          <input type="date" class="form-control" name="birthday" id="birthday" value="{{ form.birthday.value | default_if_none:'' }}">
+      </div>
+      <div class="mb-3">
+          <label for="profile" class="form-label">프로필</label>
+          <input class="form-control" type="file" id="profile" name="profile">
+      </div>
+      <button type="submit" class="btn btn-primary">회원가입하기</button>
+  </form>
+</div>
+{% endblock content %}
+
+
+{% block script %}
+<script>
+    const $username = document.querySelector("#username");
+    const $usernameFeedback = document.querySelector("#username-feedback");
+
+    $username.oninput = (e) => {
+        const usernameValue = $username.value;
+
+        // 아이디 4글자이상 
+        if (usernameValue.length < 4){
+            $usernameFeedback.textContent = '아이디는 4글자 이상이어야 합니다.';
+            $usernameFeedback.classList.add('error');
+            $usernameFeedback.classList.remove('success');
+        } else {
+            // 서버에 아이디중복체크 비동기요청
+            // fetch api, DOM처리, timerAPI등 js비동기식 작동한다.
+            fetch(`{% url 'uauth:check_username' %}?username=${encodeURIComponent(usernameValue)}`)
+                .then((response) => response.json()) // 응답 json을 js파싱처리 
+                .then((data) => {
+                    const {available} = data;
+                    if (available) {
+                        $usernameFeedback.textContent = '이 아이디는 사용가능합니다.';
+                        $usernameFeedback.classList.add('success');
+                        $usernameFeedback.classList.remove('error');
+                    } else {
+                        $usernameFeedback.textContent = '이 아이디는 이미 사용중입니다.';
+                        $usernameFeedback.classList.add('error');
+                        $usernameFeedback.classList.remove('success');
+                    }
+
+                });
+        }
+    };
+
+</script>
+{% endblock script %}
+
