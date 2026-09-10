@@ -1,0 +1,74 @@
+{# intcomma 필터 사용을 위해 load #}
+{% load humanize %}
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Session 실습</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            border: 1px solid #000
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Session</h1>
+    {# 브라우저 쿠키는 세션 키를, DB는 실제 값을 보관한다. 같은 브라우저의 다음 요청에서 복원한다. #}
+    {% if request.session.username %}
+        <p>Hello, <strong>{{ request.session.username }}</strong>!</p>
+        <form action="{% url 'app:clear_session' %}" method="post">
+            {% csrf_token %}
+            <button type="submit">Clear Session</button>
+        </form>
+
+
+        <p>포인트 : {{ request.session.point|intcomma }}점</p>
+        <p>확률 : {{ request.session.prob|floatformat:2|intcomma }}%</p>
+
+        {# expired=True는 표시용 데이터이며 실제 만료 판정은 Django가 처리한다. #}
+        <p>
+            <label for="expired">bool 예제값</label>
+            <input type="checkbox" name="expired" id="expired" disabled {% if request.session.expired %}checked{% endif %}>
+        </p>
+
+        {# list 자료형 반복문 처리 #}
+        <p>
+            {% for num in request.session.nums %}
+                <mark>{{ num }}</mark>
+            {% endfor %}
+        </p>
+
+        {# dict 자료형 반복문 처리 #}
+        <div>
+            <table>
+                <tbody>
+                <tr>
+                    <th>Message</th>
+                    <td>{{ request.session.data.message }}</td>
+                </tr>
+                <tr>
+                    <th>Today</th>
+                    <td>{{ request.session.data.today }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>Hello, Guest!</p>
+        <form action="{% url 'app:set_session' %}" method="post">
+            {% csrf_token %}
+            <label for="username">Enter your name:</label>
+            <input type="text" id="username" name="username" maxlength="40" required>
+            <button type="submit">Save Name</button>
+        </form>
+    {% endif %}
+
+</body>
+</html>

@@ -1,11 +1,92 @@
 {% extends 'layout/base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="container my-3">
-    <h1>{{ question.subject }}</h1>
-    <p>작성자: {{ question.author|default:'탈퇴한 사용자' }}</p>
-    <p>작성일: {{ question.created_at|date:'Y-m-d H:i' }}</p>
-    <div class="border rounded p-3">{{ question.content|linebreaksbr }}</div>
-    <a class="btn btn-secondary mt-3" href="{% url 'qna:index' %}">목록으로</a>
-</div>
+    <div class="container my-3" id="question-detail"
+         data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}"
+         data-login-url="{% url 'uauth:login' %}?next={{ request.path|urlencode }}">
+        <h1 class="display-6 border-bottom py-2">#{{ question.pk }} {{ question.subject }}</h1>
+        <div class="card mt-3">
+            <div class="card-body">
+                <div class="card-text" style="white-space: pre-line;">{{ question.content }}</div>
+                <div class="d-flex justify-content-end my-2">
+                    <div class="badge bg-light text-dark p-2 text-start">
+                        <div class="mb-2">{{ question.author.username|default:'탈퇴한 사용자' }}</div>
+                        <div>{{ question.created_at|date:'Y-m-d H:i' }}</div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <button type="button" class="recommend btn btn-sm btn-outline-secondary"
+                            data-uri="{% url 'qna:question_vote' id=question.pk %}">질문 추천
+                        <span class="badge rounded-pill bg-success">{{ question.voters.count }}</span>
+                    </button>
+                    {% if request.user == question.author or request.user.is_staff %}
+                        <a class="btn btn-sm btn-outline-secondary" href="{% url 'qna:question_modify' question.pk %}">질문
+                            수정</a>
+                        <form method="post" action="{% url 'qna:question_delete' question.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">질문 삭제</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <a class="btn btn-outline-secondary my-3" href="{% url 'qna:index' %}">목록보기</a>
+        <h5 class="border-bottom my-3 py-2">답변 {{ question.answers.count }}개</h5>
+        {% for answer in question.answers.all %}
+            <article id="answer_{{ answer.pk }}" class="card my-3">
+                <div class="card-body">
+                    <div class="card-text" style="white-space: pre-line;">{{ answer.content }}</div>
+                    <div class="d-flex justify-content-end my-2">
+                        <div class="badge bg-light text-dark p-2 text-start">
+                            <div class="mb-2">{{ answer.author.username|default:'탈퇴한 사용자' }}</div>
+                            <div>{{ answer.created_at|date:'Y-m-d H:i' }}</div>
+                        </div>
+                    </div>
+                    <button type="button" class="recommend btn btn-sm btn-outline-secondary"
+                            data-uri="{% url 'qna:answer_vote' id=answer.pk %}">답변 추천
+                        <span class="badge rounded-pill bg-success">{{ answer.voters.count }}</span>
+                    </button>
+                    {% if request.user == answer.author or request.user.is_staff %}
+                        <form method="post" action="{% url 'qna:answer_modify' answer.pk %}" class="my-3">
+                            {% csrf_token %}
+                            {% if answer.pk == answer_modify_id %}
+                                <div class="text-danger">{{ answer_modify_form.errors }}</div>
+                            {% endif %}
+                            <div class="mb-2">
+                                <label for="content-modify-{{ answer.pk }}" class="form-label">답변 수정</label>
+                                <textarea name="content" id="content-modify-{{ answer.pk }}" class="form-control"
+                                          rows="3" required>{% if answer.pk == answer_modify_id %}
+                                    {{ answer_modify_form.content.value|default_if_none:'' }}{% else %}
+                                    {{ answer.content }}{% endif %}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary">수정 저장</button>
+                        </form>
+                        <form method="post" action="{% url 'qna:answer_delete' answer.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">답변 삭제</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </article>
+        {% empty %}
+            <p class="text-muted">아직 답변이 없습니다.</p>
+        {% endfor %}
+        <h5 class="border-bottom my-3 py-2">답변 작성</h5>
+        <form name="answerCreateFrm" method="post"
+              action="{% url 'qna:answer_create' question_id=question.pk %}" class="my-3">
+            {% csrf_token %}
+            <div class="text-danger">{{ answer_form.errors }}</div>
+            <div class="mb-3">
+                <label for="content-create" class="form-label">답변 내용</label>
+                <textarea name="content" id="content-create" class="form-control" rows="5"
+                          required>{{ answer_form.content.value|default_if_none:'' }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">답변 등록</button>
+        </form>
+    </div>
 {% endblock content %}
+
+{% block script %}
+    <script src="{% static 'js/qna/question_detail.js' %}"></script>
+{% endblock script %}

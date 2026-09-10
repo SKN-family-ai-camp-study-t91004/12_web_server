@@ -1,0 +1,65 @@
+{% extends "../layout/base.html" %}
+{% load static %}
+
+{% block content %}
+    <div class="container my-3">
+        <h5 class="my-3 border-bottom pb-2">프로필 수정</h5>
+        {# multipart 형식으로 전송해야 이미지가 request.FILES에 들어간다. #}
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% static 'images/profile-default.jpg' as default_profile %}
+            <div class="mb-3">
+                <img id="profile-preview"
+                     src="
+                             {% if form.profile.initial %}{{ form.profile.initial.url }}{% else %}{{ default_profile }}{% endif %}"
+                     data-current-url="
+                             {% if form.profile.initial %}{{ form.profile.initial.url }}{% else %}{{ default_profile }}{% endif %}"
+                     data-default-url="{{ default_profile }}"
+                     class="img-thumbnail" width="160" height="160"
+                     style="width: 160px; height: 160px; object-fit: cover;" alt="프로필 미리보기">
+                <p class="form-text">미리보기가 보인다고 저장된 것이 아닙니다. 저장 버튼을 누르면 반영됩니다.</p>
+            </div>
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">저장</button>
+            <a href="{% url 'qna:index' %}" class="btn btn-secondary">취소</a>
+        </form>
+    </div>
+{% endblock content %}
+
+{% block script %}
+    <script>
+        const preview = document.querySelector('#profile-preview');
+        const profileInput = document.querySelector('[name="profile"]');
+        const clearInput = document.querySelector('[name="profile-clear"]');
+        const currentUrl = preview.dataset.currentUrl;
+        const defaultUrl = preview.dataset.defaultUrl;
+        let previewUrl = null;
+
+        function updatePreview() {
+            // 임시 URL은 브라우저 안의 선택 파일을 가리킨다. 다음 미리보기 전에 반납한다.
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            previewUrl = null;
+            const file = profileInput.files[0];
+            if (file) {
+                previewUrl = URL.createObjectURL(file);
+                preview.src = previewUrl;
+            } else {
+                preview.src = clearInput?.checked ? defaultUrl : currentUrl;
+            }
+        }
+
+        profileInput.addEventListener('change', () => {
+            // 새 파일 선택과 기존 이미지 삭제를 동시에 요청하지 않는다.
+            if (clearInput) clearInput.checked = false;
+            updatePreview();
+        });
+        clearInput?.addEventListener('change', () => {
+            if (clearInput.checked) profileInput.value = '';
+            updatePreview();
+        });
+        preview.addEventListener('error', () => {
+            if (preview.getAttribute('src') !== defaultUrl) preview.src = defaultUrl;
+        });
+        updatePreview();
+    </script>
+{% endblock script %}
