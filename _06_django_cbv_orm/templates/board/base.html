@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Django 게시판{% endblock %}</title>
+    <style>
+        :root {
+            color: #202936;
+            background: #f4f7fb;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        .wrap {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        header {
+            background: #183b65;
+            color: white;
+        }
+
+        nav {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        a {
+            color: #1769aa;
+        }
+
+        header a {
+            color: white;
+        }
+
+        .card {
+            background: white;
+            padding: 22px;
+            border-radius: 10px;
+            margin-top: 18px;
+            box-shadow: 0 2px 8px #dce3ed;
+            overflow-wrap: anywhere;
+        }
+
+        .label {
+            color: #607080;
+            font-size: .9rem;
+        }
+
+        .form-control {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 9px;
+            margin-top: 5px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-top: 14px;
+        }
+
+        .form-error {
+            color: #b42318;
+            margin: 5px 0;
+        }
+
+        button {
+            margin-top: 18px;
+            padding: 9px 14px;
+            border: 0;
+            border-radius: 5px;
+            background: #1769aa;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="wrap">
+        <strong>Django 뷰 비교</strong>
+        <nav>
+            <a href="{% url 'board:fbv_list' %}">FBV 목록</a>
+            <a href="{% url 'board:cbv_list' %}">CBV 목록</a>
+            <a href="{% url 'board:cbv_create' %}">새 글 작성(CBV)</a>
+        </nav>
+    </div>
+</header>
+<main class="wrap"><p class="label">현재 페이지: {{ page_label }}</p>{% block content %}{% endblock %}</main>
+</body>
+</html>

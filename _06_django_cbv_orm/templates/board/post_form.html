@@ -1,0 +1,17 @@
+{% extends "board/base.html" %}
+{% block title %}{{ page_label }} | Django 게시판{% endblock %}
+{% block content %}
+    <section class="card">
+        <h1>{{ page_label }}</h1>
+        <form method="post" novalidate>{% csrf_token %}
+            {{ form.non_field_errors }}
+            {% for field in form %}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+            {% endfor %}
+            <button type="submit">저장</button>
+        </form>
+        <p><a href="{% url list_url_name %}">목록으로</a></p>
+    </section>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "board/base.html" %}
+{% block title %}{{ post.title }} | Django 게시판{% endblock %}
+{% block content %}
+    <article class="card">
+        <h1>{{ post.title }}</h1>
+        <p>{{ post.author }} · {{ post.created_at|date:"Y-m-d H:i" }}</p>
+        <p>{{ post.content|linebreaksbr }}</p>
+        <h2>댓글</h2>
+        {% for comment in post.comments.all %}<p>{{ comment.content }}</p>{% empty %}<p>댓글이 없다.</p>{% endfor %}
+        <p><a href="{% url list_url_name %}">목록으로</a></p>
+    </article>
+{% endblock %}
