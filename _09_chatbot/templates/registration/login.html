@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상담 로그인</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            color: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .login-panel {
+            width: min(420px, 100%);
+            padding: 32px;
+            border-radius: 20px;
+            background: #fff;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, .12);
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            color: #667eea;
+            font-size: 1.75rem;
+        }
+
+        form p {
+            margin: 0 0 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        input:not([type="hidden"]) {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font: inherit;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .errorlist {
+            margin: 6px 0;
+            padding-left: 20px;
+            color: #a61e2b;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: 0;
+            border-radius: 10px;
+            color: #fff;
+            background: #667eea;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: #5a6fd8;
+        }
+    </style>
+</head>
+<body>
+<main class="login-panel">
+    <h1>상담 로그인</h1>
+    {# createsuperuser로 만든 실습 계정을 사용한다. Django가 비밀번호·세션을 처리한다. #}
+    <form method="post">
+        {% csrf_token %}{{ form.as_p }}
+        <input type="hidden" name="next" value="{{ next }}">
+        <button>로그인</button>
+    </form>
+</main>
+</body>
+</html>

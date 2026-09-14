@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT 직업상담 챗봇 | Ollama</title>
+    <style>
+        :root { --ink:#1d2b38; --muted:#617080; --line:#dce5e8; --surface:#fff; --canvas:#f3f7f7; --soft:#edf6f5; --blue:#236b8e; --blue-dark:#18546f; --teal:#167d78; --danger:#a33b45; --radius:16px; --shadow:0 18px 42px rgba(24,57,69,.10); }
+        * { box-sizing:border-box; }
+        body { display:flow-root; min-width:0; min-height:100vh; margin:0; color:var(--ink); background:var(--canvas); font-family:"Pretendard","Noto Sans KR","Apple SD Gothic Neo",sans-serif; }
+        button, textarea { font:inherit; } button { cursor:pointer; }
+        .app-shell { display:grid; grid-template-columns:248px minmax(0,1fr); gap:16px; width:min(1080px,calc(100% - 40px)); min-height:calc(100vh - 40px); margin:20px auto; }
+        .sidebar, .chat-panel { min-width:0; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow); }
+        .sidebar { display:flex; flex-direction:column; padding:18px; }
+        .brand { display:flex; align-items:center; gap:9px; margin-bottom:24px; color:var(--blue-dark); font-size:.92rem; font-weight:750; letter-spacing:-.02em; }
+        .brand-mark { display:grid; width:28px; height:28px; place-items:center; border-radius:8px; color:#fff; background:var(--teal); font-size:.82rem; }
+        .sidebar-heading { margin:0 0 8px; color:var(--muted); font-size:.74rem; font-weight:700; letter-spacing:.04em; }
+        #conversation-list { display:grid; gap:5px; overflow-y:auto; max-height:min(52vh,420px); }
+        .conversation-link { display:block; overflow:hidden; padding:10px 11px; border:1px solid transparent; border-radius:9px; color:var(--ink); font-size:.86rem; line-height:1.35; text-decoration:none; text-overflow:ellipsis; white-space:nowrap; }
+        .conversation-link:hover, .conversation-link:focus-visible, .conversation-link.is-active { border-color:#bfdbdf; color:var(--blue-dark); background:var(--soft); outline:none; }
+        [data-empty-state] { padding:10px 2px; color:var(--muted); font-size:.84rem; line-height:1.5; }
+        .account { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:auto; padding-top:18px; border-top:1px solid var(--line); }
+        .account-name { overflow:hidden; color:var(--muted); font-size:.8rem; text-overflow:ellipsis; white-space:nowrap; }
+        .chat-panel { display:flex; flex-direction:column; min-height:0; padding:clamp(20px,3vw,32px); }
+        .chat-header { display:flex; align-items:start; justify-content:space-between; gap:16px; padding-bottom:18px; border-bottom:1px solid var(--line); }
+        .eyebrow { margin:0 0 6px; color:var(--teal); font-size:.73rem; font-weight:800; letter-spacing:.08em; }
+        h1 { margin:0; color:var(--ink); font-size:clamp(1.35rem,3vw,1.8rem); letter-spacing:-.04em; }
+        .scope { max-width:470px; margin:7px 0 0; color:var(--muted); font-size:.91rem; line-height:1.55; }
+        .mode-switch { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+        .mode-link { padding:5px 9px; border:1px solid #c9d7da; border-radius:999px; color:var(--muted); font-size:.76rem; font-weight:700; text-decoration:none; }
+        .mode-link:hover, .mode-link:focus-visible, .mode-link.is-current { border-color:#86b7b4; color:var(--blue-dark); background:var(--soft); outline:none; }
+        .new-button { flex:0 0 auto; }
+        .chat-guidance { display:flex; flex-wrap:wrap; gap:7px; margin:15px 0; }
+        .guide-chip { padding:6px 9px; border-radius:999px; color:#46616c; background:#f1f6f6; font-size:.78rem; line-height:1.25; }
+        #chat-messages { display:flex; flex:1; flex-direction:column; gap:10px; min-height:280px; max-height:52vh; overflow-y:auto; padding:6px 2px 14px; scroll-behavior:smooth; }
+        .message { width:fit-content; max-width:min(82%,620px); margin:0; padding:11px 13px; border-radius:12px; font-size:.94rem; line-height:1.6; overflow-wrap:anywhere; text-align:left; white-space:pre-wrap; word-break:break-word; }
+        .user-message { align-self:flex-end; color:#fff; background:var(--blue); border-bottom-right-radius:3px; }
+        .bot-message { align-self:flex-start; background:#f0f5f5; border-bottom-left-radius:3px; }
+        .welcome-message { max-width:min(90%,620px); color:#38515c; white-space:normal; }
+        .welcome-message p + p { margin-top:7px; }
+        .message.is-streaming::after, .message.is-incomplete::after { display:block; margin-top:6px; color:var(--muted); font-size:.74rem; font-weight:700; }
+        .message.is-streaming::after { content:"답변을 받고 있습니다"; }
+        .message.is-incomplete { border:1px dashed #cc9ea3; background:#fbf2f2; }
+        .message.is-incomplete::after { content:"완료를 확인하지 못했습니다. 대화를 다시 열어 저장된 내용을 확인하세요."; color:var(--danger); }
+        .composer { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:9px; align-items:end; padding-top:14px; border-top:1px solid var(--line); }
+        .sr-only { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+        #user-input { display:block; width:100%; min-width:0; min-height:48px; max-height:160px; resize:vertical; padding:12px 13px; border:1px solid #b9c8ce; border-radius:10px; color:var(--ink); background:#fff; font-size:.95rem; line-height:1.45; }
+        #user-input::placeholder { color:#82919a; }
+        #user-input:focus-visible, button:focus-visible, .conversation-link:focus-visible, .mode-link:focus-visible { outline:3px solid rgba(22,125,120,.28); outline-offset:2px; }
+        .button { min-height:42px; padding:9px 13px; border:1px solid transparent; border-radius:9px; font-size:.84rem; font-weight:750; transition:background 160ms ease,border-color 160ms ease,color 160ms ease; }
+        .button-primary { color:#fff; background:var(--blue); } .button-primary:hover { background:var(--blue-dark); }
+        .button-outline { color:var(--blue-dark); background:#fff; border-color:#aebfc5; } .button-outline:hover { background:#f2f7f7; }
+        .button-quiet { min-height:auto; padding:5px 0; color:var(--muted); background:transparent; } .button-quiet:hover { color:var(--ink); }
+        .button-danger { color:var(--danger); background:transparent; border-color:#dfb9bd; } .button-danger:hover { background:#fff4f4; }
+        button:disabled { cursor:wait; opacity:.55; }
+        #loading { display:none; align-items:center; gap:8px; margin-top:10px; color:var(--muted); font-size:.82rem; }
+        .spinner { width:14px; height:14px; border:2px solid #cddadc; border-top-color:var(--teal); border-radius:50%; animation:spin .8s linear infinite; }
+        #status { min-height:1.3em; margin-top:9px; color:var(--muted); font-size:.82rem; line-height:1.45; }
+        #status.error { color:var(--danger); } #status.success { color:var(--teal); }
+        .chat-actions { display:flex; justify-content:flex-end; margin-top:12px; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        @media (max-width:700px) { .app-shell { grid-template-columns:minmax(0,1fr); width:min(100% - 24px,620px); min-height:calc(100vh - 24px); margin:12px auto; } .chat-panel { order:1; min-height:calc(100vh - 24px); padding:20px 16px; } .sidebar { order:2; } .chat-header { align-items:flex-start; } #chat-messages { min-height:260px; max-height:48vh; } }
+        @media (max-width:430px) { .chat-header { display:block; } .new-button { width:100%; margin-top:14px; } .composer { grid-template-columns:minmax(0,1fr); } .composer .button { width:100%; } .message, .welcome-message { max-width:92%; } }
+    </style>
+</head>
+<body>
+    <main class="app-shell">
+        <aside class="sidebar" aria-label="상담 탐색">
+            <div class="brand"><span class="brand-mark" aria-hidden="true">IT</span>진로 상담</div>
+            <p class="sidebar-heading">지난 상담</p>
+            <nav id="conversation-list" aria-label="지난 상담 목록">
+                {% for conversation in conversations %}
+                <a class="conversation-link" data-session-id="{{ conversation.pk }}" href="{% url 'app:ollama_index' %}?restore_sess_id={{ conversation.pk|urlencode }}">{{ conversation.created_at|date:"m/d H:i" }} 상담</a>
+                {% empty %}
+                <span data-empty-state>저장된 상담이 없습니다.</span>
+                {% endfor %}
+            </nav>
+            <form class="account" action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <span class="account-name" title="{{ user.username }}">{{ user.username }}</span>
+                <button class="button button-quiet" type="submit">로그아웃</button>
+            </form>
+        </aside>
+        <section class="chat-panel" aria-labelledby="chat-title">
+            <header class="chat-header">
+                <div>
+                    <p class="eyebrow">CAREER CONVERSATION · OLLAMA</p>
+                    <h1 id="chat-title">IT 진로 상담 · Ollama</h1>
+                    <p class="scope">RunPod 연결 모델의 답변을 실시간으로 표시합니다.</p>
+                    <nav class="mode-switch" aria-label="답변 방식 전환">
+                        <a class="mode-link" data-mode-path="{% url 'app:index' %}" href="{% url 'app:index' %}{% if session_id %}?restore_sess_id={{ session_id|urlencode }}{% endif %}">일반 답변</a>
+                        <a class="mode-link" data-mode-path="{% url 'app:stream_index' %}" href="{% url 'app:stream_index' %}{% if session_id %}?restore_sess_id={{ session_id|urlencode }}{% endif %}">스트리밍 답변</a>
+                        <a class="mode-link is-current" data-mode-path="{% url 'app:ollama_index' %}" href="{% url 'app:ollama_index' %}{% if session_id %}?restore_sess_id={{ session_id|urlencode }}{% endif %}" aria-current="page">Ollama 답변</a>
+                    </nav>
+                </div>
+                <button id="new-conversation" class="button button-outline new-button" type="button" data-async-control>새 상담</button>
+            </header>
+            <div class="chat-guidance" aria-label="상담 예시">
+                <span class="guide-chip">예: 백엔드 개발 학습 순서</span>
+                <span class="guide-chip">예: 데이터 분석 포트폴리오</span>
+            </div>
+            <div id="chat-messages" aria-live="polite" aria-label="상담 메시지">
+                {% for message in chat_messages %}
+                <div class="message {% if message.message_type == 'human' %}user{% else %}bot{% endif %}-message">{{ message.content }}</div>
+                {% empty %}
+                <div class="message bot-message welcome-message"><p>안녕하세요. IT 진로 상담을 시작해 보겠습니다.</p><p>관심 직무나 현재 학습 경험을 바탕으로 궁금한 점을 편하게 적어주세요.</p></div>
+                {% endfor %}
+            </div>
+            <form id="composer-form" class="composer">
+                <label class="sr-only" for="user-input">상담 질문</label>
+                <textarea id="user-input" rows="2" maxlength="2000" placeholder="IT 직무·학습·취업 고민을 적어주세요" aria-describedby="input-help"></textarea>
+                <button class="button button-primary" type="submit" data-async-control>전송</button>
+            </form>
+            <span id="input-help" class="sr-only">Enter 키로 전송하고, Shift와 Enter 키로 줄바꿈할 수 있습니다.</span>
+            <div id="loading" role="status" aria-live="polite"><span class="spinner" aria-hidden="true"></span><span id="loading-text">질문 범위를 확인하고 있습니다.</span></div>
+            <div class="chat-actions"><button id="end-conversation" class="button button-danger" type="button" data-async-control>현재 상담 삭제</button></div>
+            <div id="status" role="status" aria-live="polite"></div>
+        </section>
+    </main>
+    {{ session_id|json_script:"active-session" }}
+    <script>
+    let sessionId = JSON.parse(document.getElementById('active-session').textContent);
+    let busy = false;
+    let isComposing = false;
+    let activeReader = null;
+    let retryAttempt = null;
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const messages = document.getElementById('chat-messages');
+    const conversations = document.getElementById('conversation-list');
+    const input = document.getElementById('user-input');
+    const status = document.getElementById('status');
+
+    function showLoading(value, label = '답변을 받고 있습니다.') {
+        busy = value;
+        input.readOnly = value;
+        document.getElementById('loading').style.display = value ? 'flex' : 'none';
+        document.getElementById('loading-text').textContent = label;
+        document.querySelectorAll('[data-async-control]').forEach(control => { control.disabled = value; });
+    }
+
+    function showStatus(message, type = '') { status.textContent = message; status.className = type; }
+
+    function addMessage(content, isUser, extraClass = '') {
+        const line = document.createElement('div');
+        line.className = `message ${isUser ? 'user-message' : 'bot-message'} ${extraClass}`;
+        // 모델 텍스트는 HTML 태그도 일반 글자로 표시하여 실행되지 않게 한다.
+        line.textContent = content;
+        messages.append(line);
+        messages.scrollTop = messages.scrollHeight;
+        return line;
+    }
+
+    function markActiveConversation() {
+        conversations.querySelectorAll('[data-session-id]').forEach(link => {
+            link.classList.toggle('is-active', Boolean(sessionId) && link.dataset.sessionId === String(sessionId));
+        });
+        document.querySelectorAll('[data-mode-path]').forEach(link => {
+            link.href = sessionId ? `${link.dataset.modePath}?restore_sess_id=${encodeURIComponent(sessionId)}` : link.dataset.modePath;
+        });
+    }
+
+    function addConversationLink(id) {
+        conversations.querySelector('[data-empty-state]')?.remove();
+        conversations.querySelector(`[data-session-id="${CSS.escape(String(id))}"]`)?.remove();
+        const link = document.createElement('a');
+        link.className = 'conversation-link';
+        link.dataset.sessionId = id;
+        link.href = `{% url 'app:ollama_index' %}?restore_sess_id=${encodeURIComponent(id)}`;
+        link.textContent = '방금 시작한 상담';
+        conversations.prepend(link);
+        markActiveConversation();
+    }
+
+    function removeConversationLink(id) {
+        conversations.querySelectorAll('a[data-session-id]').forEach(link => {
+            if (link.dataset.sessionId === String(id)) link.remove();
+        });
+        if (!conversations.querySelector('a[data-session-id]')) {
+            const empty = document.createElement('span');
+            empty.dataset.emptyState = '';
+            empty.textContent = '저장된 상담이 없습니다.';
+            conversations.append(empty);
+        }
+    }
+
+    async function api(url, options = {}) {
+        const response = await fetch(url, {
+            ...options,
+            credentials: 'same-origin',
+            headers: { ...(options.headers || {}), 'X-CSRFToken': csrfToken }
+        });
+        if (response.status === 204) return null;
+        if (!response.headers.get('content-type')?.includes('application/json')) {
+            throw new Error(response.status === 404 ? '상담을 찾을 수 없습니다.' : '로그인 상태와 CSRF 설정을 확인하세요.');
+        }
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '요청을 처리하지 못했습니다.');
+        return data;
+    }
+
+    async function newConversation() {
+        if (busy) return;
+        showLoading(true, '새 상담을 만들고 있습니다.');
+        try {
+            const data = await api("{% url 'app:init_chat' %}", { method: 'POST' });
+            sessionId = data.session_id;
+            retryAttempt = null;
+            addConversationLink(sessionId);
+            messages.replaceChildren();
+            addMessage('새 상담을 시작했습니다. 궁금한 점을 남겨주세요.', false);
+            history.replaceState(null, '', `{% url 'app:ollama_index' %}?restore_sess_id=${encodeURIComponent(sessionId)}`);
+            showStatus('새 상담이 생성되었습니다.', 'success');
+            input.focus();
+        } catch (error) {
+            showStatus(error.message, 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    function removeDuplicateRetry(query) {
+        if (retryAttempt && retryAttempt.query === query) {
+            retryAttempt.userLine.remove();
+            retryAttempt.botLine.remove();
+            retryAttempt = null;
+        }
+    }
+
+    function markIncomplete(attempt) {
+        attempt.botLine.classList.remove('is-streaming');
+        attempt.botLine.classList.add('is-incomplete');
+        retryAttempt = attempt;
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    async function readNdjson(response, botLine) {
+        if (!response.headers.get('content-type')?.includes('application/x-ndjson') || !response.body) {
+            throw new Error('스트리밍 응답 형식이 올바르지 않습니다.');
+        }
+        const reader = response.body.getReader();
+        activeReader = reader;
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let receivedDone = false;
+        let completed = false;
+
+        const consumeRecord = record => {
+            if (!record.trim()) return;
+            let event;
+            try { event = JSON.parse(record); } catch { throw new Error('스트리밍 응답을 해석하지 못했습니다.'); }
+            if (!event || typeof event.type !== 'string' || receivedDone) {
+                throw new Error('스트리밍 응답 순서가 올바르지 않습니다.');
+            }
+            if (event.type === 'delta' && typeof event.content === 'string') {
+                botLine.textContent += event.content;
+                messages.scrollTop = messages.scrollHeight;
+            } else if (event.type === 'done') {
+                receivedDone = true;
+            } else if (event.type === 'error' && typeof event.error === 'string') {
+                throw new Error(event.error);
+            } else {
+                throw new Error('스트리밍 응답 형식이 올바르지 않습니다.');
+            }
+        };
+
+        try {
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                // 한글 바이트가 나뉘어 와도 다음 조각과 이어서 해석한다.
+                buffer += decoder.decode(value, { stream: true });
+                let newline;
+                // JSON 한 줄이 완성될 때까지 보관한 뒤 이벤트로 처리한다.
+                while ((newline = buffer.indexOf('\n')) !== -1) {
+                    consumeRecord(buffer.slice(0, newline));
+                    buffer = buffer.slice(newline + 1);
+                }
+            }
+            buffer += decoder.decode();
+            if (buffer.trim()) consumeRecord(buffer);
+            if (!receivedDone) throw new Error('연결이 완료되기 전에 종료되었습니다.');
+            completed = true;
+        } finally {
+            if (activeReader === reader) activeReader = null;
+            if (!completed) {
+                try { await reader.cancel(); } catch {}
+            }
+            try { reader.releaseLock(); } catch {}
+        }
+    }
+
+    async function sendMessage() {
+        const query = input.value.trim();
+        if (busy) return;
+        if (!sessionId) { showStatus('먼저 새 상담을 시작하세요.', 'error'); return; }
+        if (!query || query.length > 2000) { showStatus('질문은 1~2000자로 입력하세요.', 'error'); return; }
+
+        removeDuplicateRetry(query);
+        showLoading(true, '질문 범위를 확인하고 있습니다.');
+        let attempt = null;
+        try {
+            const body = new FormData();
+            body.append('session_id', sessionId);
+            body.append('query', query);
+            const response = await fetch("{% url 'app:chat_ollama' %}", {
+                method: 'POST', body, credentials: 'same-origin', headers: { 'X-CSRFToken': csrfToken }
+            });
+            if (!response.ok) {
+                if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('요청을 처리하지 못했습니다.');
+                const data = await response.json();
+                throw new Error(data.error || '요청을 처리하지 못했습니다.');
+            }
+            const userLine = addMessage(query, true);
+            const botLine = addMessage('', false, 'is-streaming');
+            attempt = { query, userLine, botLine };
+            showLoading(true, '답변을 받고 있습니다.');
+            await readNdjson(response, botLine);
+            botLine.classList.remove('is-streaming');
+            if (input.value.trim() === query) input.value = '';
+            retryAttempt = null;
+            showStatus('답변 저장이 완료되었습니다.', 'success');
+        } catch (error) {
+            if (attempt) markIncomplete(attempt);
+            showStatus(error.message || '연결이 끊겼습니다. 다시 시도해주세요.', 'error');
+        } finally {
+            showLoading(false);
+            input.focus();
+        }
+    }
+
+    async function endConversation() {
+        if (busy || !sessionId) return;
+        const deletingSessionId = sessionId;
+        showLoading(true, '상담을 삭제하고 있습니다.');
+        try {
+            await api("{% url 'app:del_chat' %}", { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_id: deletingSessionId }) });
+            removeConversationLink(deletingSessionId);
+            sessionId = '';
+            retryAttempt = null;
+            messages.replaceChildren();
+            addMessage('상담 내역을 삭제했습니다. 새 상담을 시작하면 다시 질문할 수 있습니다.', false);
+            history.replaceState(null, '', "{% url 'app:ollama_index' %}");
+            markActiveConversation();
+            showStatus('');
+        } catch (error) {
+            showStatus(error.message, 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    document.getElementById('new-conversation').addEventListener('click', newConversation);
+    document.getElementById('end-conversation').addEventListener('click', endConversation);
+    document.getElementById('composer-form').addEventListener('submit', event => { event.preventDefault(); if (!isComposing) sendMessage(); });
+    input.addEventListener('compositionstart', () => { isComposing = true; });
+    input.addEventListener('compositionend', () => { isComposing = false; });
+    input.addEventListener('keydown', event => {
+        const isImeInput = event.isComposing || event.keyCode === 229 || isComposing;
+        if (event.key === 'Enter' && !event.shiftKey && !isImeInput) { event.preventDefault(); sendMessage(); }
+    });
+    window.addEventListener('pagehide', () => { if (activeReader) activeReader.cancel().catch(() => {}); });
+    markActiveConversation();
+    messages.scrollTop = messages.scrollHeight;
+    </script>
+</body>
+</html>
